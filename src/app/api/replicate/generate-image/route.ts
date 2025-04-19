@@ -5,33 +5,39 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error(
       "The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it."
     );
   }
 
-  const { prompt } = await request.json();
-
   try {
+    const { prompt, negativePrompt, width, height } = await req.json();
+
     const output = await replicate.run(
-      "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
       {
         input: {
           prompt: prompt,
-          image_dimensions: "512x512",
+          negative_prompt: negativePrompt || "",
+          width: width || 512,
+          height: height || 512,
           num_outputs: 1,
+          scheduler: "K_EULER",
           num_inference_steps: 50,
           guidance_scale: 7.5,
-          scheduler: "DPMSolverMultistep",
-        },
+          prompt_strength: 0.8,
+        }
       }
     );
 
-    return NextResponse.json({ output }, { status: 200 });
+    return NextResponse.json({ imageUrl: output[0] });
   } catch (error) {
-    console.error("Error from Replicate API:", error);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error("Error generating image:", error);
+    return NextResponse.json(
+      { error: "Error al generar la imagen" },
+      { status: 500 }
+    );
   }
 }
