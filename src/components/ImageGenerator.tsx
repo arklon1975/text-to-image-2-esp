@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
-import { Sparkles, Download, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Download, Image as ImageIcon, Camera } from 'lucide-react';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'El prompt es requerido'),
@@ -82,119 +82,86 @@ export default function ImageGenerator() {
   };
 
   return (
-    <Card className="p-6 shadow-lg border-2 border-purple-100 dark:border-purple-900 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+    <div className="space-y-8">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
-            Describe tu imagen
-          </label>
-          <Textarea
-            {...form.register('prompt')}
-            placeholder="Un astronauta montando un caballo en Marte, estilo realista..."
-            className="min-h-[120px] bg-white dark:bg-gray-800"
-          />
-          {form.formState.errors.prompt && (
-            <p className="text-red-500 text-sm mt-1">
-              {form.formState.errors.prompt.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
-            Elementos a evitar (opcional)
-          </label>
-          <Textarea
-            {...form.register('negativePrompt')}
-            placeholder="Elementos que no quieres que aparezcan en la imagen..."
-            className="min-h-[80px] bg-white dark:bg-gray-800"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
-              Ancho
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <label htmlFor="prompt" className="text-lg font-medium text-gray-200">
+              Describe la fotografía que deseas crear
             </label>
-            <Input
-              type="number"
-              {...form.register('width', { valueAsNumber: true })}
-              min={256}
-              max={1024}
-              step={64}
-              className="bg-white dark:bg-gray-800"
+            {isGenerating && (
+              <span className="text-sm text-pink-500 animate-pulse">
+                Generando fotografía...
+              </span>
+            )}
+          </div>
+          <div className="relative">
+            <textarea
+              id="prompt"
+              {...form.register('prompt')}
+              placeholder="Ej: Retrato de una mujer joven en un café parisino, luz natural, estilo fotográfico profesional, Canon EOS R5, 85mm f/1.4"
+              className="w-full h-32 px-4 py-3 rounded-xl border border-gray-600 bg-gray-800/50 text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent backdrop-blur-sm transition-all duration-200 resize-none"
+              disabled={isGenerating}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
-              Alto
-            </label>
-            <Input
-              type="number"
-              {...form.register('height', { valueAsNumber: true })}
-              min={256}
-              max={1024}
-              step={64}
-              className="bg-white dark:bg-gray-800"
-            />
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all"
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <>
-              <Sparkles className="w-5 h-5 animate-spin" />
-              Generando...
-            </>
-          ) : (
-            <>
-              <ImageIcon className="w-5 h-5" />
-              Generar Imagen
-            </>
-          )}
-        </Button>
-
-        {isGenerating && (
-          <div className="space-y-2">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-center text-gray-500 dark:text-gray-400">
-              Generando imagen... Esto puede tomar unos momentos.
-            </p>
-          </div>
-        )}
-
-        {generatedImage && (
-          <div className="mt-6 space-y-4">
-            <div className="relative group">
-              <img
-                src={generatedImage}
-                alt="Imagen generada"
-                className="w-full rounded-lg shadow-lg"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="bg-white/90 hover:bg-white"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = generatedImage;
-                    link.download = 'imagen-generada.png';
-                    link.click();
-                  }}
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Descargar
-                </Button>
-              </div>
+            <div className="absolute bottom-3 right-3">
+              <button
+                type="submit"
+                disabled={isGenerating || !form.watch('prompt')}
+                className={`px-6 py-2 rounded-lg font-medium text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-pink-500 ${
+                  isGenerating
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg hover:shadow-pink-500/25"
+                }`}
+              >
+                {isGenerating ? (
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                    <span>Generando...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Camera className="w-5 h-5" />
+                    <span>Crear Fotografía</span>
+                  </div>
+                )}
+              </button>
             </div>
+          </div>
+        </div>
+
+        {form.formState.errors.prompt && (
+          <div className="p-4 rounded-xl bg-red-900/20 border border-red-800">
+            <p className="text-red-400">{form.formState.errors.prompt.message}</p>
           </div>
         )}
       </form>
-    </Card>
+
+      {generatedImage && (
+        <div className="space-y-4">
+          <div className="relative group">
+            <div className="aspect-square rounded-xl overflow-hidden border border-gray-700 shadow-xl transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-pink-500/10">
+              <img
+                src={generatedImage}
+                alt="Fotografía generada"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = generatedImage;
+                  link.download = 'fotografia-generada.png';
+                  link.click();
+                }}
+                className="p-3 rounded-full bg-gray-900/90 text-white shadow-lg hover:bg-gray-800 transition-all duration-200 transform hover:scale-110 backdrop-blur-sm"
+              >
+                <Download className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 } 
